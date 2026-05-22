@@ -2,7 +2,7 @@
 from scapy.all import sniff, UDP, IP, TCP, Raw, ICMP, conf
 
 
-def process_packet(packet):
+def process_packet(packet,):
 	print("new packet")
 	if packet.haslayer(IP):
 
@@ -19,6 +19,7 @@ def process_packet(packet):
 				destinationport=packet[TCP].dport
 				print(f"TCP source port: {sourceport}")
 				print(f"TCP destination port: {destinationport}")
+
 		elif packet.haslayer(UDP):
 			
 			protocol="UDP"
@@ -29,4 +30,11 @@ def process_packet(packet):
 	if packet.haslayer(Raw):
 		payload=packet[Raw].load
 		print(f"payload:{payload[:50]}")
-sniff( iface=conf.iface, prn=process_packet, store=False)
+
+def CommandLinterface():
+	try:
+		sniff( iface=conf.iface, prn=process_packet, store=False)
+	except KeyboardInterrupt:
+		print("sniffing is stop by user")
+if __name__=="__main__":
+	CommandLinterface()

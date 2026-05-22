@@ -1,65 +1,99 @@
 import tkinter as tk
-from tkinter import ttk
-from scapy.all import sniff, UDP, IP, TCP, Raw, ICMP, conf
+from tkinter import ttk,messagebox
+from scapy.all import sniff, UDP, IP, TCP,  ICMP 
 import threading
 
-Sniffing = False
 
-def process_packet(packet):
-	print("new packet")
-	if packet.haslayer(IP):
 
-		src=packet[IP].src
-		dst=packet[IP].dst
 
-		protocol="others"
-		sport="_"
-		dport="_"
+
+
+def process_packet(packet,packet_table, root):
 	
-		if packet.haslayer(TCP):
+	if not packet.haslayer(IP):
+			
+		return
+	
+	src=packet[IP].src
+	dst=packet[IP].dst
+
+	protocol="others"
+	sport="_"
+	dport="_"
+	
+	if packet.haslayer(TCP):
 				
 				protocol="TCP"
 				sport= packet[TCP].sport
 				dport=packet[TCP].dport
 			
-		elif packet.haslayer(UDP):
+	elif packet.haslayer(UDP):
 			
 			protocol="UDP"
 			sport=packet[UDP].sport
 			dport=packet[UDP].dport
-		elif packet.haslayer(ICMP):
+	elif packet.haslayer(ICMP):
 			protocol="ICMP"
-		packet_table.insert("",tk.END,	values=(src , dst, protocol, sport, dport))
+	root.after(0, lambda:
+						packet_table.insert("",tk.END,	
+													values=(src , dst, protocol, sport, dport)))
 
-def startsniffing():
-	 
- global Sniffing
-Sniffing = True 
-sniff(prn=process_packet, store=False, stop_filter=lambda x:not Sniffing)
+def GraphicalUinterface():
+	print("start in gui")
+	Sniffing = False
+	root=tk.Tk()	
+	root.title("PYthon GUI network ")
+	root.geometry("900x500")
 
-def run_sniffer():
-	thread=threading.Thread(target=startsniffing)	
-	thread.daemon=True
-	thread.start()
+	columns=("source ip", "Destination ip", "protocol", "src port", "dst port")
+	packet_table=ttk.Treeview(root, columns=columns, show="headings")
 
-def stop_sniffer():
-	 global Sniffing
-Sniffing= False
+	for col in columns:
+		packet_table.heading(col,text=col)
+		packet_table.column(col,width=150)
 
-root=tk.Tk()	
-root.title("PYthon GUI network ")
-root.geometry("900x500")
-start_btn=tk.Button(root, text="startsniffing",command=run_sniffer)
-start_btn.pack(pady=5)
+	packet_table.pack(fill=tk.BOTH, expand=True)
 
-stop_btn=tk.Button(root, text="stopsniffer",command=stop_sniffer)
+	def startsniffing():
+		nonlocal Sniffing 
+		Sniffing = True
+		try:
+			ssniff = sniff(iface=None,
+				prn=lambda P: process_packet(P, packet_table, root),
+				store=False,
+				stop_filter=lambda x: not Sniffing)
+		except Exception as e:
+			root.after(0, lambda: messagebox.showerror("error", f"sniffing failed {e}"))
 
-start_btn.pack(pady=5)
-columns=("source ip", "Destination ip", "protocol", "src port", "dst port")
-packet_table=ttk.Treeview(root, columns=columns, show="headings")
-for col in columns:
-	packet_table.heading(col,text=col)
-	packet_table.column(col,width=150)
-packet_table.pack(fill=tk.BOTH, expand=True)
-root.mainloop()
-			
+	def run_sniffer():
+		nonlocal Sniffing
+		if Sniffing:
+			return 
+		thread=threading.Thread(target=startsniffing, daemon=True)	
+		thread.start()
+		start_btn.config(state="disabled",text="sniffing")
+		stop_btn.config(state="normal")
+	
+
+
+		
+		
+	def stop_sniffer():
+		nonlocal Sniffing
+		Sniffing= False
+		start_btn.config(state="normal",text="start sniffing")
+		stop_btn.config(state="disabled")
+
+
+	start_btn=tk.Button(root, text="Start sniffing",command=run_sniffer)
+	start_btn.pack(pady=5)
+
+	stop_btn=tk.Button(root, text="Stop sniffing",command=stop_sniffer)
+	stop_btn.pack(pady=5)
+	stop_btn.config(state="disabled")
+
+	root.mainloop()
+if __name__=="__main__":
+	GraphicalUinterface()
+		
+					
