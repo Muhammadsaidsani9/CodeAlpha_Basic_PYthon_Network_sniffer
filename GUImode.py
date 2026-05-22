@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk,messagebox
-from scapy.all import sniff, UDP, IP, TCP,  ICMP 
+from scapy.all import sniff, UDP, IP, TCP, ICMP, conf
 import threading
 
 
@@ -54,11 +54,14 @@ def GraphicalUinterface():
 
 	packet_table.pack(fill=tk.BOTH, expand=True)
 
+	status_label = tk.Label(root, text="Status: stopped", anchor="w")
+	status_label.pack(fill=tk.X, padx=5, pady=(0, 5))
+
 	def startsniffing():
 		nonlocal Sniffing 
 		Sniffing = True
 		try:
-			ssniff = sniff(iface=None,
+			ssniff = sniff(iface=conf.iface,
 				prn=lambda P: process_packet(P, packet_table, root),
 				store=False,
 				stop_filter=lambda x: not Sniffing)
@@ -73,6 +76,7 @@ def GraphicalUinterface():
 		thread.start()
 		start_btn.config(state="disabled",text="sniffing")
 		stop_btn.config(state="normal")
+		status_label.config(text="Status: sniffing")
 	
 
 
@@ -83,6 +87,7 @@ def GraphicalUinterface():
 		Sniffing= False
 		start_btn.config(state="normal",text="start sniffing")
 		stop_btn.config(state="disabled")
+		status_label.config(text="Status: stopped")
 
 
 	start_btn=tk.Button(root, text="Start sniffing",command=run_sniffer)
@@ -91,6 +96,12 @@ def GraphicalUinterface():
 	stop_btn=tk.Button(root, text="Stop sniffing",command=stop_sniffer)
 	stop_btn.pack(pady=5)
 	stop_btn.config(state="disabled")
+
+	def stop_and_exit():
+		stop_sniffer()
+		root.destroy()
+
+	root.protocol("WM_DELETE_WINDOW", stop_and_exit)
 
 	root.mainloop()
 if __name__=="__main__":
