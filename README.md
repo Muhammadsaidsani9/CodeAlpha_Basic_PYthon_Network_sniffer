@@ -12,9 +12,13 @@ Supports GUI and CLI modes for live traffic capture.
 1. Install Npcap on Windows with WinPcap API mode enabled
 2. Run: `pip install -r requirements.txt`
 3. Run as Administrator: `python main.py`
-4. Choose `g` for GUI or `c` for CLI
+4. Choose `2` for GUI or `1` for CLI
 
 ## Screenshot
-![Live capture](screenshot.png)
+![Live capture](scket_cli.png
+live_cap_packet_cli2.png
+live_cap_packet_gui (2).png
+live_cap_packet_gui.png
+__pycache__reenshot.png)
 
 Educational use only.
